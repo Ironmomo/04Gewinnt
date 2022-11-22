@@ -75,14 +75,9 @@ const elt = (type, className,...children) => {
     return el
 }
 
-function animation() {
-    Configs.isAnimating = true
-    gameBoard.forEach(row => row.forEach(cell => {
-        if(cell instanceof Coin) {
-            cell.updateCurrentPosition()
-            cell.currentPosition.y === cell.position.y ? Configs.isAnimating = false : requestAnimationFrame(animation)
-        }
-    }))
+function animation(cell) {
+    cell.updateCurrentPosition()
+    cell.currentPosition.y === cell.position.y ? Configs.isAnimating = false : requestAnimationFrame(() => animation(cell))
     showBoard()
 }
 
@@ -138,7 +133,9 @@ function makeMove(cell, color) {
             }
         }
         if(row !== -1) {
-            gameBoard[row][cell] = new Coin(color)
+            const newCoin = new Coin(color)
+            gameBoard[row][cell] = newCoin
+            return newCoin
         }
     }
 }
@@ -186,20 +183,23 @@ function resetGame() {
 
 function humanMakeMove(cell) {
     const color = Configs.activePlayer === 0 ? "blue" : "red"
-    makeMove(cell,color)
+    const newCoin = makeMove(cell,color)
     Configs.activePlayer = (Configs.activePlayer + 1) % 2
     showBoard()
-    animation()
+    animation(newCoin)
     if(checkWinner()) {
         showWinner(color)
     }
 }
 
 function aiMakeMove() {
-    makeBestMove()
-    Configs.activePlayer = (Configs.activePlayer + 1) % 2
+    const bestMove = findBestMove()
+    const newCoin = makeMove(bestMove, "red")
     showBoard()
-    animation()
+    setTimeout(() => {
+        animation(newCoin)
+    },200)
+    Configs.activePlayer = (Configs.activePlayer + 1) % 2
     if(checkWinner()) {
         showWinner("red")
     }
@@ -218,20 +218,22 @@ onload = () => {
 }
 
 onresize = () => {
+    const allCoins = []
     gameBoard.forEach(row => row.forEach(cell => {
         if(cell instanceof Coin) {
             cell.currentPosition.y = 0
             cell.velocityY = 1
+            allCoins.push(cell)
         }
     }))
     showBoard()
     Configs.fieldWidth = board.childNodes[0].offsetWidth
-    animation()
+    allCoins.forEach(coin => animation(coin))
 }
 
 //minimax
 
-function makeBestMove() {
+function findBestMove() {
     let currentBestMove = undefined
     let maxWert = -Infinity
     for(let i = 0; i < Configs.numCells; i++) {
@@ -245,7 +247,7 @@ function makeBestMove() {
             }
         }
     }
-    makeMove(currentBestMove,"red")
+    return currentBestMove
 }
 
 const bewertungsMatrix = [[0.03,0.04,0.05,0.07,0.05,0.04,0.03],
