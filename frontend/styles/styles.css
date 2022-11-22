@@ -93,6 +93,9 @@ button:hover {
 @media screen and (max-width: 500px) {
   .board {
     width: 91vw;
+  }
+
+  body {
     background-color: aquamarine;
   }
 
