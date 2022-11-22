@@ -8,7 +8,7 @@
 body {
     width: 100vw;
     height: 100vh;
-    background-color: antiquewhite;
+    background-color: rgb(202, 202, 202);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -50,24 +50,31 @@ body {
 
 #buttonContainer {
   position: absolute;
-  top: 5px;
-  left: 5px;
+  top: 0;
   display:flex;
   flex-direction:row;
+  width: 100vw;
+  height: 20vh;
+  justify-content: center;
+  align-items: center;
 }
 
 button {
+  height: 50px;
+  width: 140px;
   margin: 5px;
   font-size: 1.1em;
   padding: 4px;
-  border: 2px solid rgb(0, 174, 255);
-  border-radius: 15px;
-  background-color: rgb(171, 171, 171);
+  border: 2px solid rgb(0, 209, 191);
+  border-radius: 25px;
+  background-color: rgb(20, 20, 20);
+  color: rgb(0, 209, 191);
 }
 
 button:hover {
-  background-color: rgb(0, 174, 255);
-  border-color: rgb(171, 171, 171);
+  background-color: rgb(0, 209, 191);
+  border-color: rgb(0, 209, 191);
+  color: rgb(20, 20, 20);
 }
 
 #messageBox {
@@ -76,8 +83,8 @@ button:hover {
   background-color:rgba(255, 255, 255, 0.8);
   border: 2px solid rgb(0, 174, 255);
   border-radius: 10px;
-  width: 50vw;
-  height: 50vh;
+  width: 80vw;
+  height: 50vw;
 }
 
 #messageBox.show {
@@ -107,6 +114,12 @@ button:hover {
   }
 
   #buttonContainer {
-    flex-direction: row;
+    top: 10px;
+    height: 50px;
+  }
+
+  #messageBox {
+    width: 50vw;
+    height: 50vh;
   }
 }
