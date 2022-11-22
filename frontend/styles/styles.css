@@ -90,9 +90,10 @@ button:hover {
   translate: -50% -50%;
 }
 
-@media only screen and (max-width: 500px) {
+@media screen and (max-width: 500px) {
   .board {
     width: 91vw;
+    background-color: aquamarine;
   }
 
   .board .field {
