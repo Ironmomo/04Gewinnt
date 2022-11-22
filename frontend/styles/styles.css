@@ -89,18 +89,3 @@ button:hover {
   left: 50%;
   translate: -50% -50%;
 }
-
-@media (min-width: 500px) {
-  .board {
-    width: 42vw;
-  }
-  .board .field {
-    width: 6vw;
-    height: 6vw;
-  }
-
-  .board .field .piece {
-    width: 5vw;
-    height: 5vw;
-  }
-}
