@@ -241,7 +241,7 @@ function findBestMove() {
             makeMove(i,"red")
             let score = minimax(6,-Infinity,Infinity,false)
             resetMove(i)
-            if(score > maxWert) {
+            if(score >= maxWert) {
                 maxWert = score
                 currentBestMove = i
             }
