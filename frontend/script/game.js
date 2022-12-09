@@ -5,6 +5,7 @@ const msgBox = document.getElementById("messageBox")
 const btnNext = document.getElementById("btnNext")
 import {Coin} from "./Coin.js"
 import { Game } from "./LocalGame.js"
+import { renderSJDON, createSJDONElement } from "./render-sjdon.js"
 
 let Configs = {
     fieldWidth: 0,
@@ -115,30 +116,20 @@ function showBoard () {
     gameBoard.forEach((row,yIdx) => {
         row.forEach((field,xIdx) => {
             if(field === "") {
-                const div = elt("div","field")
+                const div = createSJDONElement("div", {class:"field"})
                 elements.push(div)
             }else if(field instanceof Coin) {
                 let idx = yIdx*Configs.numCells + xIdx
                 const fDiv = board.childNodes[idx]
                 field.setPositionRelativToParent(fDiv)
-                const cDiv = elt("div",`piece ${field.color}`)
-                cDiv.style = `top: ${field.currentPosition.y}px; left: ${field.currentPosition.x}px`
-                fDiv.replaceChildren(cDiv)
-                elements.push(fDiv)
+                const cDiv = createSJDONElement("div",{class:`piece ${field.color}`, style: `top: ${field.currentPosition.y}px; left: ${field.currentPosition.x}px`})
+                const newFDiv = createSJDONElement("div", {class:"field"}, undefined, cDiv)
+                elements.push(newFDiv)
             }
         })
     })
-    board.replaceChildren(...elements)
-}
-
-const elt = (type, className,...children) => {
-    const el = document.createElement(type)
-    el.className = className
-    for(let child of children) {
-        el.appendChild(child)
-    }
-
-    return el
+    //board.replaceChildren(...elements)
+    renderSJDON(elements, board)
 }
 
 function animation(cell) {
