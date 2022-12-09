@@ -1,25 +1,24 @@
 const {Game} = require("./Game")
 const model = new Map()
+const maxNumberOfActiveGames = 50
 
 function createNewGame(req,res) {
-    if(model.size > 50) {
+    if(model.size === maxNumberOfActiveGames) {
         res.redirect("/")
     } else {
         const gameMode = req.body.mode
         const gameKey = randomKey()
-        const playerOneKey = randomKey()
-        const playerTwoKey = randomKey()
-        const newGame = new Game(gameMode,playerOneKey,playerTwoKey)
+        const newGame = new Game(gameMode)
         model.set(gameKey,newGame)
-        res.json({gameKey:gameKey,playerKey:playerOneKey,gameBoard:newGame.gameBoard})
+        res.json({gameKey:gameKey, gameBoard:newGame.gameBoard})
     }
 }
 
 function findgame() {
     return (req,res,next) => {
-        if(isAuth(req.body.gameKey,req.body.playerKey)) {
-
-            req.body.game = model.get(req.body.gameKey)
+        const game = model.get(req.params.gameKey)
+        if (game) {
+            req.body.game = game
             next()
         } else {
             res.redirect("/")
@@ -28,13 +27,19 @@ function findgame() {
 }
 
 function makeMove(req,res) {
+    const game = req.body.game
     if(Number.isInteger(req.body.cell)) {
-        const game = req.body.game
-        game.nextMove(req.body.cell)
-        res.json({gameBoard: game.gameBoard, hasWinner: game.winner})   
+        game.nextMove(req.body.cell, req.body.playerKey)
+        res.json({gameBoard: game.gameBoard, hasWinner: game.winner})  
+        if(game.winner) {
+            removeGame(game)
+        } 
     }
 }
 
+function removeGame(game) {
+    model.delete(game)
+}
 
 //private
 function randomKey() {
@@ -44,11 +49,6 @@ function randomKey() {
         key += newChar
     }
     return key
-}
-
-function isAuth(gameKey,playerKey) {
-    const game = model.get(gameKey)
-    return game && (game.playerOneKey === playerKey || game.playerTwoKey === playerKey)
 }
 
 module.exports = {createNewGame, findgame, makeMove}

@@ -1,10 +1,12 @@
-function checkData(toCheck) {
+function checkString() {
+    const reg = new RegExp('[a-z]')
     return (req,res,next) => {
-        if(req.body[`${toCheck}`]) {
+        if(reg.test(req.params.gameKey)) {
             next()
+        } else {
+            res.redirect("/")
         }
-        res.redirect("/")
     }
 }
 
-module.exports = {hasGameKey, checkData}
+module.exports = {checkString}

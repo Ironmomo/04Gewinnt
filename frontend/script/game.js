@@ -4,24 +4,26 @@ const btnTwo = document.getElementById("btnTwo")
 const msgBox = document.getElementById("messageBox")
 const btnNext = document.getElementById("btnNext")
 import {Coin} from "./Coin.js"
+import { Game } from "./LocalGame.js"
 
-const Configs = {
+let Configs = {
     fieldWidth: 0,
     numRows: 6,
     numCells: 7,
     hasWinner: undefined,
     gameMode: 1,
     gameKey: undefined,
-    playerKey: undefined
+    savedLocal: false
 }
 
 //Variables
 let gameBoard = Array(Configs.numRows).fill("").map(() => Array(Configs.numCells).fill(""))
 let allCoins = []
+let localGame = undefined
 
-//send/recieve
+//send&recieve
 function sendMove(y) {
-    const data = {cell: y, playerKey: Configs.playerKey, gameKey:Configs.gameKey}
+    const data = {cell: y, gameKey:Configs.gameKey}
     let baseUrl = "/gameArea/move/"
     baseUrl = baseUrl.concat(`${Configs.gameKey}`)
     fetch(baseUrl, {
@@ -35,23 +37,15 @@ function sendMove(y) {
     .then(response => {
         gameBoard = response.gameBoard
         Configs.hasWinner = response.hasWinner
-        parseBoard()
-        showBoard()
-        allCoins.forEach(coin =>  {
-            if(coin.isNew) {
-                if(coin.color === "red" && Configs.gameMode === 1) {
-                    setTimeout(() => animation(coin),200)
-                } else {
-                    animation(coin)
-                }
-            }
-
-        })
-        if(Configs.hasWinner) {
-            showWinner()
-        }
+        updateGame()
     })
-    .catch(e => console.error(e))  
+    .catch(e => {
+        console.error(e)
+        localGame = new Game(Configs.gameMode)
+        localGame.gameBoard = gameBoard
+        Configs.savedLocal = true
+        saveLocal()
+    })  
 }
 
 function startNewGame(mode) {
@@ -69,11 +63,16 @@ function startNewGame(mode) {
     .then(response => {
         gameBoard = response.gameBoard
         Configs.gameKey = response.gameKey
-        Configs.playerKey = response.playerKey
         parseBoard()
         showBoard()
     })
-    .catch(e => console.error(e))
+    .catch(e => {
+        console.error(e)
+        localGame = new Game(mode)
+        Configs.savedLocal = true
+        saveLocal()
+        updateGame()
+    })
 }
 
 //Functions
@@ -96,6 +95,17 @@ function parseBoard() {
                 allCoins.push(coin)
             }
             gameBoard[y][x] = coin
+        })
+    })
+}
+
+function parseBoardToString() {
+    gameBoard.forEach((row,y) => {
+        row.forEach((cell, x) => {
+            if(gameBoard[y][x] instanceof Coin) {
+                gameBoard[y][x] = gameBoard[y][x].color
+
+            }
         })
     })
 }
@@ -137,24 +147,69 @@ function animation(cell) {
     showBoard()
 }
 
+function updateGame(){
+    parseBoard()
+    showBoard()
+    allCoins.forEach(coin =>  {
+        if(coin.isNew) {
+            if(coin.color === "red" && Configs.gameMode === 1) {
+                setTimeout(() => animation(coin),200)
+            } else {
+                animation(coin)
+            }
+        }
+    })
+    if(Configs.hasWinner) {
+        resetGame()
+        showWinner()
+    }
+}
+
+function sendLocalMove(cell) {
+    parseBoardToString()
+    localGame.nextMove(new String(cell))
+    gameBoard = localGame.gameBoard
+    Configs.hasWinner = localGame.winner
+    saveLocal()
+}
+
+function saveLocal() {
+    const data = {gameBoard: gameBoard, activePlayer: localGame.activePlayer, configs: Configs}
+    localStorage.setItem("localGame",JSON.stringify(data))
+}
+
+function resetGame() {
+    localGame = undefined
+    Configs.savedLocal = false
+    localStorage.clear()
+}
+
 //eventlisteners
 btnOne.addEventListener("click",() => {
+    resetGame()
     Configs.gameMode = 1
     startNewGame(1)
 })
 
 btnTwo.addEventListener("click",() => {
+    resetGame()
     Configs.gameMode = 2
     startNewGame(2)
 })
 
 btnNext.addEventListener("click",() => {
+    resetGame()
     startNewGame(Configs.gameMode)
 })
 
 board.addEventListener("click",(event) => {
     const cell = Math.floor((event.clientX - board.offsetLeft)/Configs.fieldWidth)
-    sendMove(cell)
+    if(localGame) {
+        sendLocalMove(cell)
+        updateGame()
+    } else {
+        sendMove(cell)
+    }
 })
 
 function showWinner() {
@@ -163,31 +218,21 @@ function showWinner() {
 }
 
 onload = () => {
-    startNewGame(Configs.gameMode)
     showBoard()
     Configs.fieldWidth = board.childNodes[0].offsetWidth
+    let data = localStorage.getItem("localGame")
+    if(data) {
+        data = JSON.parse(data)
+        localGame = new Game(data.configs.gameMode)
+        gameBoard = data.gameBoard
+        localGame.gameBoard = gameBoard
+        localGame.activePlayer = data.activePlayer
+        Configs = data.configs
+        updateGame()
+    }
 }
 
 onresize = () => {
     showBoard()
     Configs.fieldWidth = board.childNodes[0].offsetWidth
 }
-
-
-
-
-/**
- * Artefacts
- * 
- * const randomSetField = () => {
-    let color = "red"
-    if(Math.round(Math.random()) === 1) {
-        color = "blue"
-    }
-    const field = Math.round(Math.random() * 41)
-    let row = field % Configs.numRows
-    let cell = field % Configs.numCells
-    gameBoard[row][cell] = new Coin(color)
-    showBoard()
-}
- */

@@ -1,4 +1,4 @@
-class Game {
+export class Game {
     constructor(gameMode) {
         this.numRows = 6
         this.numCells = 7
@@ -216,4 +216,3 @@ class Game {
     }
 }
 
-module.exports = {Game}
