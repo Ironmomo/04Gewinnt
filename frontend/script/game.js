@@ -128,7 +128,6 @@ function showBoard () {
             }
         })
     })
-    //board.replaceChildren(...elements)
     renderSJDON(elements, board)
 }
 
