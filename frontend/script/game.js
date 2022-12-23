@@ -3,6 +3,9 @@ const btnOne = document.getElementById("btnOne")
 const btnTwo = document.getElementById("btnTwo")
 const msgBox = document.getElementById("messageBox")
 const btnNext = document.getElementById("btnNext")
+const btnUndo = document.getElementById("btnUndo")
+const btnSave = document.getElementById("btnSave")
+const btnLoad = document.getElementById("btnLoad")
 import {Coin} from "./Coin.js"
 import { Game } from "./LocalGame.js"
 import { renderSJDON, createSJDONElement } from "./render-sjdon.js"
@@ -24,7 +27,7 @@ let localGame = undefined
 
 //send&recieve
 function sendMove(y) {
-    const data = {cell: y, gameKey:Configs.gameKey}
+    const data = {cell: y}
     let baseUrl = "/gameArea/move/"
     baseUrl = baseUrl.concat(`${Configs.gameKey}`)
     fetch(baseUrl, {
@@ -76,6 +79,31 @@ function startNewGame(mode) {
     })
 }
 
+function getDataByKey() {
+    let baseUrl = "/gameArea/loadGame/"
+    if(Configs.gameKey) {
+        baseUrl = baseUrl.concat(`${Configs.gameKey}`)
+    } else if (localStorage.getItem("gamekey")){
+        baseUrl = baseUrl.concat(`${localStorage.getItem("gamekey")}`)
+    }
+    fetch(baseUrl, {
+        method: "GET"
+    })
+    .then(response => response.json())
+    .then(response => {
+        gameBoard = response.gameBoard
+        Configs.hasWinner = response.hasWinner
+        updateGame()
+    })
+    .catch(e => {
+        console.error(e)
+        localGame = new Game(Configs.gameMode)
+        localGame.gameBoard = gameBoard
+        Configs.savedLocal = true
+        saveLocal()
+    })
+}
+
 //Functions
 
 function parseBoard() {
@@ -104,7 +132,7 @@ function parseBoardToString() {
     gameBoard.forEach((row,y) => {
         row.forEach((cell, x) => {
             if(gameBoard[y][x] instanceof Coin) {
-                gameBoard[y][x] = gameBoard[y][x].color
+                gameBoard[y][x] = gameBoard[y][x].color.substring(0,1)
 
             }
         })
@@ -142,7 +170,7 @@ function updateGame(){
     showBoard()
     allCoins.forEach(coin =>  {
         if(coin.isNew) {
-            if(coin.color === "red" && Configs.gameMode === 1) {
+            if(coin.color === "r" && Configs.gameMode === 1) {
                 setTimeout(() => animation(coin),200)
             } else {
                 animation(coin)
@@ -164,8 +192,23 @@ function sendLocalMove(cell) {
 }
 
 function saveLocal() {
-    const data = {gameBoard: gameBoard, activePlayer: localGame.activePlayer, configs: Configs}
+    parseBoardToString()
+    const data = {gameBoard: gameBoard, activePlayer: localGame.activePlayer, configs: Configs, moveStack: localGame.moveStack}
     localStorage.setItem("localGame",JSON.stringify(data))
+}
+
+function loadLocal() {
+    let data = localStorage.getItem("localGame")
+    if(data) {
+        data = JSON.parse(data)
+        localGame = new Game(data.configs.gameMode)
+        gameBoard = data.gameBoard
+        localGame.gameBoard = gameBoard
+        localGame.activePlayer = data.activePlayer
+        localGame.moveStack = data.moveStack ? data.moveStack : []
+        Configs = data.configs
+        updateGame()
+    }
 }
 
 function resetGame() {
@@ -192,6 +235,30 @@ btnNext.addEventListener("click",() => {
     startNewGame(Configs.gameMode)
 })
 
+btnUndo.addEventListener("click",() => {
+    if(Configs.savedLocal) {
+        localGame.undo()
+        saveLocal()
+        updateGame()
+    }
+})
+
+btnSave.addEventListener("click", () => {
+    if(Configs.savedLocal) {
+        saveLocal()
+    } else {
+        localStorage.setItem("gamekey",Configs.gameKey)
+    }
+})
+
+btnLoad.addEventListener("click", () => {
+    if(Configs.savedLocal) {
+        loadLocal()
+    } else {
+        getDataByKey()
+    }
+})
+
 board.addEventListener("click",(event) => {
     const cell = Math.floor((event.clientX - board.offsetLeft)/Configs.fieldWidth)
     if(localGame) {
@@ -210,16 +277,7 @@ function showWinner() {
 onload = () => {
     showBoard()
     Configs.fieldWidth = board.childNodes[0].offsetWidth
-    let data = localStorage.getItem("localGame")
-    if(data) {
-        data = JSON.parse(data)
-        localGame = new Game(data.configs.gameMode)
-        gameBoard = data.gameBoard
-        localGame.gameBoard = gameBoard
-        localGame.activePlayer = data.activePlayer
-        Configs = data.configs
-        updateGame()
-    }
+    loadLocal()
 }
 
 onresize = () => {

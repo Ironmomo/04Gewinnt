@@ -14,6 +14,7 @@ export class Game {
                                 [0.05,0.08,0.11,0.13,0.11,0.08,0.05],
                                 [0.04,0.06,0.07,0.1,0.07,0.06,0.04],
                                 [0.03,0.04,0.05,0.07,0.05,0.04,0.03]]
+        this.moveStack = []
     }
 
     getGameBoard() {
@@ -112,7 +113,7 @@ export class Game {
     aiMakeMove() {
         const bestMove = this.findBestMove()
         this.makeMove(bestMove, "red")
-        
+        this.moveStack.push(bestMove)
     }
 
     nextMove(cell) {
@@ -120,6 +121,7 @@ export class Game {
         if(cell >= 0 && cell < this.numCells && this.isRunning) {
             if(this.gameMode === 1) {
                 this.makeMove(cell,"blue")
+                this.moveStack.push(cell)
                 if(this.checkWinner()) {
                     this.isRunning = false
                     this.winner = "blue"  
@@ -134,6 +136,7 @@ export class Game {
             } else {
                 const nextPlayer = this.activePlayer === 0 ? "blue" : "red"
                 this.makeMove(cell,nextPlayer)
+                this.moveStack.push(cell)
                 if(this.checkWinner()) {
                     this.isRunning = false
                     this.winner = nextPlayer  
@@ -143,6 +146,10 @@ export class Game {
         }
     }
 
+    undo() {
+        const cell = this.moveStack.pop()
+        this.resetMove(cell)
+    }
 
     //minimax
 

@@ -29,12 +29,18 @@ function findgame() {
 function makeMove(req,res) {
     const game = req.body.game
     if(Number.isInteger(req.body.cell)) {
-        game.nextMove(req.body.cell, req.body.playerKey)
+        game.nextMove(req.body.cell)
         res.json({gameBoard: game.gameBoard, hasWinner: game.winner})  
         if(game.winner) {
             removeGame(game)
         } 
     }
+}
+
+function getData(req, res) {
+    const game = req.body.game
+    res.status(200)
+    res.json({gameBoard:game.gameBoard, hasWinner: game.winner})
 }
 
 function removeGame(game) {
@@ -51,4 +57,4 @@ function randomKey() {
     return key
 }
 
-module.exports = {createNewGame, findgame, makeMove}
+module.exports = {createNewGame, findgame, makeMove, getData}
